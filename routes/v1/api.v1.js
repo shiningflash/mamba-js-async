@@ -16,7 +16,8 @@ router.get('/', (req, res) => {
 router.post('/sales-order/create', (req, res) => {
 	amqpManager.connect()
 		.then((channel) => {
-			amqpManager.sendMessageToQueue(channel, 'sales_order.events.captured.erpnext.create', req.body);
+			console.log(req.body);
+			amqpManager.sendMessageToQueue(channel, 'sales_order.events.captured.erpnext.create', JSON.stringify(req.body));
 			res.status(200).json({status: 'message published'});
 		})
 		.catch((error) => {
