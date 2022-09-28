@@ -1,9 +1,14 @@
-const express = require('express');
-const router = express.Router();
+// async router doc: https://www.npmjs.com/package/express-async-router
+
+const { v4: uuidv4 } = require('uuid');
+
+const AsyncRouter = require("express-async-router").AsyncRouter;
 const amqpManager = require('../../events/amqp.manager');
 
+var router = AsyncRouter();
+
 router.get('/', (req, res) => {
-	amqpManager.connect()
+	return amqpManager.connect()
 		.then((channel) => {
 			amqpManager.sendMessageToQueue(channel, 'testqueue', 'Hello from RabbitMQ!');
 			res.status(200).json({status: 'all okay!'});
@@ -14,7 +19,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/sales-order/create', (req, res) => {
-	amqpManager.connect()
+	return amqpManager.connect()
 		.then((channel) => {
 			console.log(req.body);
 			
@@ -26,9 +31,17 @@ router.post('/sales-order/create', (req, res) => {
 			channel.assertExchange(exchange, 'topic', {
 				durable: true
 			});
-			channel.publish(exchange, routing_key, Buffer.from(JSON.stringify(req.body)));
+			event_id = uuidv4();
+			event_msg = {
+				event_id: event_id,
+				payload: req.body
+			}
+			channel.publish(exchange, routing_key, Buffer.from(JSON.stringify(event_msg)));
 
-			res.status(200).json({status: 'message published'});
+			res.status(200).json({
+				status: 'message published',
+				event_id: event_id
+			});
 		})
 		.catch((error) => {
 			res.status(400).json({error: error});

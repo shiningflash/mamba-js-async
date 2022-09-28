@@ -32,8 +32,10 @@ module.exports.sendMessageToQueue = function(channel, queueName, message) {
 
 module.exports.consumeFromQueue = function(channel, queueName, callback) {
 	channel.assertQueue(queueName, {
-		durable: false
+		durable: true
 	});
+
+	channel.bindQueue(queueName, 'sales_order.failed.events.exchange', 'sales_order.failed.events.captured.erpnext'); // (queueName, exchange, key)
 	
 	console.log('Worker for queue ' + queueName + ' started! Listening for messages...');
 	
